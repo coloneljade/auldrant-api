@@ -1,0 +1,40 @@
+{
+	"name": "@auldrant/api",
+	"version": "0.0.4",
+	"description": "Simple library for working with APIs",
+	"author": "Colonel Jade <colonel.jade@proton.me> (https://github.com/coloneljade/)",
+	"license": "MIT",
+	"homepage": "https://github.com/coloneljade/auldrant-api#readme",
+	"repository": "github:coloneljade/auldrant-api",
+	"bugs": {
+		"url": "https://github.com/coloneljade/auldrant-api/issues",
+		"email": "colonel.jade@proton.me"
+	},
+	"type": "module",
+	"exports": {
+		".": "./dist/index.js"
+	},
+	"module": "dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist/**/*.js",
+		"dist/**/*.d.ts",
+		"LICENSE"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.1.14",
+		"bun-plugin-dts": "^0.3.0",
+		"fs": "^0.0.1-security",
+		"path": "^0.12.7",
+		"typescript": "^5.7.2",
+		"yargs": "^17.7.2"
+	},
+	"scripts": {
+		"build": "bun clean && bun ./build.ts",
+		"clean": "bun ./clean.ts --dir dist",
+		"publish": "bun test && bun build && bun publish --frozen-lockfile"
+	}
+}

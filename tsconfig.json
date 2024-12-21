@@ -1,0 +1,37 @@
+{
+	"compilerOptions": {
+		//Latest features
+		"lib": ["ESNext", "DOM"],
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleDetection": "force",
+
+		// Bundler mode
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"verbatimModuleSyntax": true,
+		"emitDeclarationOnly": true,
+
+		//Build
+		"declaration": true,
+		"declarationDir": "dist",
+		"outDir": "dist",
+		"removeComments": true,
+
+		// Best practices
+		"strict": true,
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+
+		// Force strict checks
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noPropertyAccessFromIndexSignature": true,
+
+		"baseUrl": "./src",
+		"paths": {
+			"@static": ["./static.ts"]
+		}
+	},
+	"include": ["src/index.ts"]
+}

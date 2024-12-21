@@ -1,0 +1,33 @@
+{
+	"files.exclude": {
+		"**/bun.lockb": true,
+		"**/dist": true,
+		"**/node_modules": true
+	},
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/bower_components": true,
+		"**/*.code-search": true
+	},
+	"editor.insertSpaces": false,
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.formatOnType": false,
+	"editor.formatOnPaste": true,
+	"editor.formatOnSaveMode": "file",
+	"editor.codeActionsOnSave": {
+		"source.organizeImports": "always"
+	},
+	"workbench.editor.enablePreviewFromCodeNavigation": true,
+	"workbench.editor.enablePreviewFromQuickOpen": true,
+	"typescript.format.semicolons": "insert",
+	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": true,
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"css.lint.duplicateProperties": "error",
+	"css.lint.float": "error",
+	"css.lint.idSelector": "error",
+	"css.lint.important": "warning",
+	"css.lint.universalSelector": "warning",
+	"css.lint.zeroUnits": "warning"
+}

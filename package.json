@@ -30,7 +30,7 @@
 		"fs": "^0.0.1-security",
 		"path": "^0.12.7",
 		"typescript": "^5.7.2",
-		"yargs": "^17.7.2"
+		"yargs": "^18.0.0"
 	},
 	"scripts": {
 		"build": "bun clean && bun ./build.ts",

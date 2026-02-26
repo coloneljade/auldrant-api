@@ -21,14 +21,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-          no-cache: true
-
-      - name: Debug lockfile
-        run: |
-          cp bun.lock bun.lock.orig
-          bun install
-          diff bun.lock.orig bun.lock || true
-
       - name: Install dependencies
         run: bun install --frozen-lockfile
 

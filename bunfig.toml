@@ -1,6 +1,3 @@
-[install]
-saveTextLockfile = true
-
 [test]
 root = "./tests"
 coverage = true

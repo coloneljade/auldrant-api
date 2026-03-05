@@ -1,2 +1,38 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+
+# Coverage
+coverage/
+*.lcov
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Claude AI
+.claude/settings.local.json
+.claude/audit.log*
+.claude/debug-trace*
+
+# VSCode (allow shared config only)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# Vite
+vite.config.ts.timestamp-*

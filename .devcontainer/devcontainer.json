@@ -1,0 +1,29 @@
+{
+	"name": "Auldrant API",
+	"image": "oven/bun:latest",
+	"features": {
+		"ghcr.io/devcontainers/features/common-utils:2": {
+			"configureZshAsDefaultShell": true
+		},
+		"ghcr.io/devcontainers/features/git:1": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "zsh",
+				"terminal.integrated.inheritEnv": true
+			},
+			"extensions": [
+				"biomejs.biome",
+				"davidanson.vscode-markdownlint",
+				"editorconfig.editorconfig",
+				"gruntfuggly.todo-tree",
+				"redhat.vscode-yaml",
+				"streetsidesoftware.code-spell-checker"
+			]
+		}
+	},
+	"postCreateCommand": "bun install",
+	"remoteUser": "bun"
+}

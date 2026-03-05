@@ -1,12 +1,12 @@
+import apiCall from './apiCall.ts';
+import { logRequest } from './logging.ts';
 import {
 	CompressionMethod,
 	HttpMethod,
 	HttpStatus,
-	MimeType,
 	type IRequestArgs,
-} from "@static";
-import apiCall from "apiCall";
-import { logRequest } from "logging";
+	MimeType,
+} from './static.ts';
 
 export {
 	apiCall,

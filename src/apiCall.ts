@@ -1,10 +1,10 @@
 import {
 	CompressionMethod,
-	HttpMethod,
+	type HttpMethod,
 	HttpStatus,
-	MimeType,
 	type IRequestArgs,
-} from "@static";
+	MimeType,
+} from './static.ts';
 
 /**
  * Compresses content using compression algorithm
@@ -17,9 +17,10 @@ function compress(content: BodyInit, method?: CompressionMethod): BodyInit {
 	//since this is a client app, must use client compatible options https://developer.mozilla.org/en-US/docs/Web/API/Compression_Streams_API
 	switch (method) {
 		case CompressionMethod.GZIP:
-		case CompressionMethod.DEFLATE:
+		case CompressionMethod.DEFLATE: {
 			const stream = new Blob([JSON.stringify(content)]).stream();
 			return stream.pipeThrough(new CompressionStream(method));
+		}
 		default: //no supported compression
 			return content;
 	}
@@ -41,7 +42,7 @@ const apiCall = async <T>(
 ): Promise<{ data: T | null; status: HttpStatus }> => {
 	try {
 		const { body, contentType, accept, compression } = requestArgs;
-		const sendBody = body ? compress(body, compression) : undefined;
+		const sendBody = body ? compress(body, compression) : null;
 		const { signal } = controller;
 
 		const resp = await fetch(url, {
@@ -49,9 +50,9 @@ const apiCall = async <T>(
 			method,
 			body: sendBody,
 			headers: new Headers({
-				"Content-Type": contentType as string,
+				'Content-Type': contentType as string,
 				Accept: accept as string,
-				"Content-Encoding": compression as string,
+				'Content-Encoding': compression as string,
 			}),
 		});
 
@@ -73,8 +74,9 @@ const apiCall = async <T>(
 			default:
 				return { data: (await resp.blob()) as T, status: resp.status };
 		}
-	} catch (error: any) {
-		console.error(error.message);
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : String(error);
+		console.error(message);
 		return { data: null, status: HttpStatus.INTERNAL_SERVER_ERROR };
 	}
 };

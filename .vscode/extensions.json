@@ -1,10 +1,12 @@
 {
 	"recommendations": [
-		"be5invis.toml",
-		"ms-azuretools.vscode-docker",
+		"biomejs.biome",
+		"editorconfig.editorconfig",
 		"gruntfuggly.todo-tree",
 		"redhat.vscode-yaml",
-		"esbenp.prettier-vscode",
+		"davidanson.vscode-markdownlint",
+		"streetsidesoftware.code-spell-checker",
 		"github.vscode-github-actions"
-	]
+	],
+	"unwantedRecommendations": ["GitHub.copilot", "GitHub.copilot-chat"]
 }

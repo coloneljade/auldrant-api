@@ -1,33 +1,34 @@
 {
-	"files.exclude": {
-		"**/bun.lockb": true,
-		"**/dist": true,
-		"**/node_modules": true
-	},
-	"search.exclude": {
-		"**/node_modules": true,
-		"**/bower_components": true,
-		"**/*.code-search": true
-	},
-	"editor.insertSpaces": false,
+	"editor.formatOnType": true,
 	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"editor.formatOnType": false,
-	"editor.formatOnPaste": true,
-	"editor.formatOnSaveMode": "file",
-	"editor.codeActionsOnSave": {
-		"source.organizeImports": "always"
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome",
+		"editor.formatOnSave": true,
+		"editor.codeActionsOnSave": {
+			"source.fixAll.biome": "explicit"
+		}
 	},
-	"workbench.editor.enablePreviewFromCodeNavigation": true,
-	"workbench.editor.enablePreviewFromQuickOpen": true,
-	"typescript.format.semicolons": "insert",
-	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": true,
-	"typescript.enablePromptUseWorkspaceTsdk": true,
-	"typescript.tsdk": "node_modules/typescript/lib",
-	"css.lint.duplicateProperties": "error",
-	"css.lint.float": "error",
-	"css.lint.idSelector": "error",
-	"css.lint.important": "warning",
-	"css.lint.universalSelector": "warning",
-	"css.lint.zeroUnits": "warning"
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"files.exclude": {
+		"**/.git": true,
+		"**/node_modules": true,
+		"**/dist": true
+	},
+	"files.eol": "\n",
+	"files.insertFinalNewline": true,
+	"files.trimTrailingWhitespace": true,
+	"search.exclude": {
+		"**/.git": true,
+		"**/node_modules": true,
+		"**/dist": true,
+		"bun.lock": true
+	},
+	"cSpell.words": ["Auldrant", "biomejs", "lefthook", "vite"],
+	"github.gitProtocol": "ssh",
+	"chat.disableAIFeatures": true
 }

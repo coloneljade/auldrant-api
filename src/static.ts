@@ -1,4 +1,4 @@
-export const enum HttpStatus {
+export enum HttpStatus {
 	OK = 200,
 	CREATED = 201,
 	ACCEPTED = 202,
@@ -52,56 +52,56 @@ export const enum HttpStatus {
 	NETWORK_AUTHENTICATION_REQUIRED = 511,
 }
 
-export const enum MimeType {
+export enum MimeType {
 	// Text types
-	HTML = "text/html",
-	PLAIN = "text/plain",
-	CSV = "text/csv",
-	CSS = "text/css",
-	JAVASCRIPT = "text/javascript",
+	HTML = 'text/html',
+	PLAIN = 'text/plain',
+	CSV = 'text/csv',
+	CSS = 'text/css',
+	JAVASCRIPT = 'text/javascript',
 
 	// Application types
-	JSON = "application/json",
-	XML = "application/xml",
-	PDF = "application/pdf",
-	ZIP = "application/zip",
-	GZIP = "application/gzip",
-	OCTET_STREAM = "application/octet-stream",
+	JSON = 'application/json',
+	XML = 'application/xml',
+	PDF = 'application/pdf',
+	ZIP = 'application/zip',
+	GZIP = 'application/gzip',
+	OCTET_STREAM = 'application/octet-stream',
 
 	// Image types
-	JPEG = "image/jpeg",
-	PNG = "image/png",
-	GIF = "image/gif",
-	SVG = "image/svg+xml",
-	WEBP = "image/webp",
+	JPEG = 'image/jpeg',
+	PNG = 'image/png',
+	GIF = 'image/gif',
+	SVG = 'image/svg+xml',
+	WEBP = 'image/webp',
 
 	// Video types
-	MP4 = "video/mp4",
-	WEBM = "video/webm",
+	MP4 = 'video/mp4',
+	WEBM = 'video/webm',
 
 	// Audio types
-	MP3 = "audio/mpeg",
-	OGG = "audio/ogg",
-	WAV = "audio/wav",
+	MP3 = 'audio/mpeg',
+	OGG = 'audio/ogg',
+	WAV = 'audio/wav',
 
 	// Other types
-	ICO = "image/x-icon",
-	TAR = "application/x-tar",
+	ICO = 'image/x-icon',
+	TAR = 'application/x-tar',
 }
 
-export const enum HttpMethod {
-	GET = "GET",
-	POST = "POST",
-	PUT = "PUT",
-	DELETE = "DELETE",
-	PATCH = "PATCH",
-	OPTIONS = "OPTIONS",
-	HEAD = "HEAD",
+export enum HttpMethod {
+	GET = 'GET',
+	POST = 'POST',
+	PUT = 'PUT',
+	DELETE = 'DELETE',
+	PATCH = 'PATCH',
+	OPTIONS = 'OPTIONS',
+	HEAD = 'HEAD',
 }
 
-export const enum CompressionMethod {
-	GZIP = "gzip",
-	DEFLATE = "deflate",
+export enum CompressionMethod {
+	GZIP = 'gzip',
+	DEFLATE = 'deflate',
 }
 
 export interface IRequestArgs {

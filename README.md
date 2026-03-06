@@ -1,19 +1,76 @@
 # @auldrant/api
 
-@auldrant/api is a client-side library intended to simplify working with Web APIs so you can focus on your core application logic. It also provides some content useful for server-side applications as well. We recommend using [Bun](https://bun.sh) to work with @auldrant/api. To install
+@auldrant/api is a client-side library that makes REST API calls simple and correct. It wraps the [Fetch API][fetch] with ergonomic method helpers, automatic JSON serialization, and a discriminated union response type so you always know whether a request succeeded.
+
+We recommend using [Bun](https://bun.sh) to work with @auldrant/api.
 
 ```bash
 bun install
 ```
 
+## Usage
+
+```ts
+import { api } from '@auldrant/api';
+
+const result = await api.get<User[]>('/api/users');
+if (result.ok) {
+  console.log(result.data); // User[]
+} else {
+  console.error(result.status); // HTTP status code, or 0 for network errors
+}
+```
+
+## API
+
+### Method helpers
+
+All helpers return `Promise<ApiResponse<T>>`.
+
+| Method | Signature |
+|--------|-----------|
+| `api.get` | `(url, options?)` |
+| `api.post` | `(url, body?, options?)` |
+| `api.put` | `(url, body?, options?)` |
+| `api.patch` | `(url, body?, options?)` |
+| `api.delete` | `(url, options?)` |
+| `api.head` | `(url, options?)` |
+| `api.options` | `(url, options?)` |
+
+Plain objects passed as `body` are automatically serialized to JSON.
+
+### ApiResponse
+
+```ts
+type ApiResponse<T> =
+  | { ok: true;  data: T;    status: number }
+  | { ok: false; data: null; status: number };
+```
+
+Use `ok` to narrow the type. Status `0` means a network error or aborted request.
+
+### Options
+
+```ts
+interface RequestOptions {
+  accept?: MimeType;      // Default: MimeType.JSON
+  headers?: HeadersInit;
+  signal?: AbortSignal;
+}
+
+interface RequestBodyOptions extends RequestOptions {
+  contentType?: MimeType;           // Default: MimeType.JSON
+  compression?: CompressionMethod;  // gzip or deflate
+}
+```
+
 ## Static Content
 
-@auldrant/api is designed to provide simple, reusable code for common work with APIs. All static content can be found in [static.ts][static]. This includes common content like HTTP methods and status codes, as well as many types for the most common HTTP headers including MIME types and encodings, and some helper typings for working with requests and responses.
+All enums and types are re-exported from the package root:
 
-## Methods
+- `HttpMethod` — GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS
+- `HttpStatus` — common HTTP status codes
+- `MimeType` — common MIME type strings
+- `CompressionMethod` — gzip, deflate
 
-@auldrant/api's main feature is [apiCall], which aims to provide a simpler interface for working with [fetch] that handles some of the technical operations automatically, behind the scenes. For example, it will automatically perform supported compression on content upon request and set the appropriate `Content-Encoding` header.
-
-[static]: ./src/static.ts
-[apiCall]: ./src/apiCall.ts
 [fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API

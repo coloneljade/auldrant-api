@@ -67,6 +67,8 @@ export enum MimeType {
 	ZIP = 'application/zip',
 	GZIP = 'application/gzip',
 	OCTET_STREAM = 'application/octet-stream',
+	FORM_DATA = 'multipart/form-data',
+	URL_ENCODED = 'application/x-www-form-urlencoded',
 
 	// Image types
 	JPEG = 'image/jpeg',
@@ -74,6 +76,7 @@ export enum MimeType {
 	GIF = 'image/gif',
 	SVG = 'image/svg+xml',
 	WEBP = 'image/webp',
+	ICO = 'image/x-icon',
 
 	// Video types
 	MP4 = 'video/mp4',
@@ -85,7 +88,6 @@ export enum MimeType {
 	WAV = 'audio/wav',
 
 	// Other types
-	ICO = 'image/x-icon',
 	TAR = 'application/x-tar',
 }
 
@@ -104,9 +106,28 @@ export enum CompressionMethod {
 	DEFLATE = 'deflate',
 }
 
-export interface IRequestArgs {
-	body?: BodyInit;
-	contentType?: MimeType;
+/** Options for requests that do not carry a body (GET, HEAD, OPTIONS, DELETE). */
+export interface RequestOptions {
+	/** Expected response MIME type. Defaults to `MimeType.JSON`. */
 	accept?: MimeType;
+	/** Additional headers to include in the request. */
+	headers?: HeadersInit;
+	/** AbortSignal to cancel the request. */
+	signal?: AbortSignal;
+}
+
+/** Options for requests that carry a body (POST, PUT, PATCH). */
+export interface RequestBodyOptions extends RequestOptions {
+	/** Request body content type. Defaults to `MimeType.JSON`. */
+	contentType?: MimeType;
+	/** Compress the request body before sending. */
 	compression?: CompressionMethod;
 }
+
+/**
+ * Discriminated union for API responses.
+ * Use `ok` to narrow: if `ok` is true, `data` is `T`; otherwise `data` is `null`.
+ */
+export type ApiResponse<T> =
+	| { ok: true; data: T | null; status: number }
+	| { ok: false; data: null; status: number };

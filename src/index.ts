@@ -1,19 +1,10 @@
-import apiCall from './apiCall.ts';
-import { logRequest } from './logging.ts';
-import {
-	CompressionMethod,
-	HttpMethod,
-	HttpStatus,
-	type IRequestArgs,
-	MimeType,
-} from './static.ts';
-
+export { api } from './api.ts';
 export {
-	apiCall,
+	type ApiResponse,
 	CompressionMethod,
 	HttpMethod,
 	HttpStatus,
-	logRequest,
 	MimeType,
-	type IRequestArgs,
-};
+	type RequestBodyOptions,
+	type RequestOptions,
+} from './static.ts';

@@ -32,28 +32,53 @@ gh auth status
 - **Not installed**: stop immediately.
 - **Not authenticated**: stop immediately.
 
-## Step 1 -- Pre-PR Checks
+## Step 1 -- Resolve Feature Branch
+
+`/push` returns to `main` after pushing, so `/pr` may be called from either `main`
+or the feature branch. Resolve the target branch:
 
 ```bash
-git rev-parse --abbrev-ref --symbolic-full-name @{u}
+CURRENT=$(git rev-parse --abbrev-ref HEAD)
+```
+
+**If on a feature branch** (not `main`): use it directly.
+
+**If on `main`**: find the most recently pushed feature branch:
+
+```bash
+git for-each-ref --sort=-committerdate refs/heads/ \
+  --format='%(refname:short)' | grep -v '^main$' | head -1
+```
+
+Verify the resolved branch has a remote tracking ref:
+
+```bash
+git rev-parse --abbrev-ref --symbolic-full-name <branch>@{u}
+```
+
+If no suitable branch is found or it has no upstream, tell the user to run `/push` first.
+
+Store the resolved branch name as `$BRANCH` for all subsequent steps.
+
+## Step 2 -- Pre-PR Checks
+
+```bash
 git status
 ```
 
-- [ ] Branch is pushed to remote (has upstream tracking)
 - [ ] Working tree is clean
+- [ ] `$BRANCH` has upstream tracking (verified in Step 1)
 
-If either fails, tell the user to run `/push` first.
-
-## Step 2 -- Check for Existing PR
+## Step 3 -- Check for Existing PR
 
 ```bash
-gh pr list --head <branch> --json number,url
+gh pr list --head $BRANCH --json number,url
 ```
 
 - If a PR exists -> note the number for `gh pr edit` later
 - If no PR exists -> will use `gh pr create`
 
-## Step 3 -- Check for Related Issues
+## Step 4 -- Check for Related Issues
 
 ```bash
 gh issue list --state open --json number,title,labels
@@ -62,11 +87,11 @@ gh issue list --state open --json number,title,labels
 - If open issues exist, present them to the user and ask which (if any) this PR fixes
 - If no open issues, skip this step
 
-## Step 4 -- Build PR
+## Step 5 -- Build PR
 
 ### PR Title
 
-Derive the title from the branch name. The branch was already named deliberately
+Derive the title from `$BRANCH`. The branch was already named deliberately
 during `/push` as `type/description` -- convert it to `type: description` (or
 `type(scope): description` if scope is clear from context). Under 70 characters.
 
@@ -75,7 +100,7 @@ during `/push` as `type/description` -- convert it to `type: description` (or
 Build the body from commit history and issue links:
 
 ```bash
-git log --format="- %s" main..HEAD
+git log --format="- %s" main..$BRANCH
 ```
 
 Structure:
@@ -96,7 +121,7 @@ Fixes #M
 
 **New PR:**
 ```bash
-gh pr create --base main --title "<title>" --body "..."
+gh pr create --head $BRANCH --base main --title "<title>" --body "..."
 ```
 
 **Existing PR:**
@@ -104,7 +129,7 @@ gh pr create --base main --title "<title>" --body "..."
 gh pr edit <number> --title "<title>" --body "..."
 ```
 
-## Step 5 -- Output
+## Step 6 -- Output
 
 ```
 ## PR Complete
@@ -123,7 +148,7 @@ invoked on the PR. Do not manually create or modify CHANGELOG entries.
 
 ---
 
-## Step 6 -- Wait for CI (Merge Mode Only)
+## Step 7 -- Wait for CI (Merge Mode Only)
 
 Wait for CI checks to complete before posting the merge comment:
 
@@ -131,13 +156,13 @@ Wait for CI checks to complete before posting the merge comment:
 gh pr checks <number> --watch --fail-fast
 ```
 
-## Step 7 -- Post Merge Comment (Merge Mode Only)
+## Step 8 -- Post Merge Comment (Merge Mode Only)
 
 ```bash
 gh pr comment <number> --body "/merge [flags]"
 ```
 
-## Step 8 -- Wait for Merge (Merge Mode Only)
+## Step 9 -- Wait for Merge (Merge Mode Only)
 
 Poll the PR state until it merges or fails:
 
@@ -145,16 +170,18 @@ Poll the PR state until it merges or fails:
 gh pr view <number> --json state,mergedAt
 ```
 
-## Step 9 -- Local Cleanup (Merge Mode Only)
+## Step 10 -- Local Cleanup (Merge Mode Only)
+
+Since `/push` already returned to `main`, just fast-forward and delete:
 
 ```bash
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-git checkout main
 git pull --ff-only origin main
 git branch -d "$BRANCH"
 ```
 
-## Step 10 -- Merge Mode Output
+If not currently on `main` (edge case), check out `main` first.
+
+## Step 11 -- Merge Mode Output
 
 ```
 ## PR Merged

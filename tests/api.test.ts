@@ -3,6 +3,13 @@ import { api, CompressionMethod, MimeType } from '../src/index.ts';
 
 const originalFetch = globalThis.fetch;
 
+// Bun's fetch type includes `preconnect`; cast once here so tests stay clean.
+function setFetch(
+	impl: (input?: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+): void {
+	globalThis.fetch = mock(impl) as unknown as typeof fetch;
+}
+
 afterEach(() => {
 	globalThis.fetch = originalFetch;
 });
@@ -10,7 +17,7 @@ afterEach(() => {
 describe('api.head', () => {
 	it('returns ok with null data on 200', async () => {
 		// Arrange
-		globalThis.fetch = mock(() => Promise.resolve(new Response(null, { status: 200 })));
+		setFetch(() => Promise.resolve(new Response(null, { status: 200 })));
 
 		// Act
 		const result = await api.head('/ping');
@@ -25,7 +32,7 @@ describe('api.head', () => {
 describe('204 No Content', () => {
 	it('returns ok with null data regardless of method', async () => {
 		// Arrange
-		globalThis.fetch = mock(() => Promise.resolve(new Response(null, { status: 204 })));
+		setFetch(() => Promise.resolve(new Response(null, { status: 204 })));
 
 		// Act
 		const result = await api.post('/items', { name: 'test' });
@@ -40,7 +47,7 @@ describe('204 No Content', () => {
 describe('api.get', () => {
 	it('returns parsed JSON data on success', async () => {
 		// Arrange
-		globalThis.fetch = mock(() =>
+		setFetch(() =>
 			Promise.resolve(
 				new Response(JSON.stringify({ id: 1, name: 'Alice' }), {
 					status: 200,
@@ -60,7 +67,7 @@ describe('api.get', () => {
 
 	it('returns ok: false with null data on error status', async () => {
 		// Arrange
-		globalThis.fetch = mock(() => Promise.resolve(new Response(null, { status: 404 })));
+		setFetch(() => Promise.resolve(new Response(null, { status: 404 })));
 
 		// Act
 		const result = await api.get('/missing');
@@ -73,7 +80,7 @@ describe('api.get', () => {
 
 	it('returns ok: false with status 0 on network failure', async () => {
 		// Arrange
-		globalThis.fetch = mock(() => Promise.reject(new TypeError('Failed to fetch')));
+		setFetch(() => Promise.reject(new TypeError('Failed to fetch')));
 
 		// Act
 		const result = await api.get('/unreachable');
@@ -87,9 +94,7 @@ describe('api.get', () => {
 	it('returns ok: false with status 0 on abort', async () => {
 		// Arrange
 		const controller = new AbortController();
-		globalThis.fetch = mock(() =>
-			Promise.reject(new DOMException('The operation was aborted.', 'AbortError'))
-		);
+		setFetch(() => Promise.reject(new DOMException('The operation was aborted.', 'AbortError')));
 
 		// Act
 		const result = await api.get('/slow', { signal: controller.signal });
@@ -101,7 +106,7 @@ describe('api.get', () => {
 
 	it('returns text when accept is MimeType.PLAIN', async () => {
 		// Arrange
-		globalThis.fetch = mock(() => Promise.resolve(new Response('hello world', { status: 200 })));
+		setFetch(() => Promise.resolve(new Response('hello world', { status: 200 })));
 
 		// Act
 		const result = await api.get<string>('/readme', { accept: MimeType.PLAIN });
@@ -114,7 +119,7 @@ describe('api.get', () => {
 	it('returns a Blob for binary accept types', async () => {
 		// Arrange
 		const bytes = new Uint8Array([1, 2, 3]);
-		globalThis.fetch = mock(() => Promise.resolve(new Response(bytes, { status: 200 })));
+		setFetch(() => Promise.resolve(new Response(bytes, { status: 200 })));
 
 		// Act
 		const result = await api.get<Blob>('/file.bin', { accept: MimeType.OCTET_STREAM });
@@ -126,9 +131,7 @@ describe('api.get', () => {
 
 	it('accepts a URL instance as the url argument', async () => {
 		// Arrange
-		globalThis.fetch = mock(() =>
-			Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }))
-		);
+		setFetch(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })));
 
 		// Act & Assert
 		const result = await api.get(new URL('https://example.com/api'));
@@ -139,9 +142,7 @@ describe('api.get', () => {
 describe('api.post', () => {
 	it('sends a plain object body and returns parsed JSON', async () => {
 		// Arrange
-		globalThis.fetch = mock(() =>
-			Promise.resolve(new Response(JSON.stringify({ id: 42 }), { status: 201 }))
-		);
+		setFetch(() => Promise.resolve(new Response(JSON.stringify({ id: 42 }), { status: 201 })));
 
 		// Act
 		const result = await api.post<{ id: number }>('/items', { name: 'widget' });
@@ -154,9 +155,7 @@ describe('api.post', () => {
 
 	it('accepts a pre-serialized string body', async () => {
 		// Arrange
-		globalThis.fetch = mock(() =>
-			Promise.resolve(new Response(JSON.stringify({ id: 1 }), { status: 200 }))
-		);
+		setFetch(() => Promise.resolve(new Response(JSON.stringify({ id: 1 }), { status: 200 })));
 
 		// Act
 		const result = await api.post('/items', JSON.stringify({ name: 'widget' }));
@@ -169,9 +168,7 @@ describe('api.post', () => {
 		// Arrange
 		const form = new FormData();
 		form.append('name', 'widget');
-		globalThis.fetch = mock(() =>
-			Promise.resolve(new Response(JSON.stringify({ id: 1 }), { status: 200 }))
-		);
+		setFetch(() => Promise.resolve(new Response(JSON.stringify({ id: 1 }), { status: 200 })));
 
 		// Act
 		const result = await api.post('/upload', form);
@@ -184,7 +181,7 @@ describe('api.post', () => {
 describe('api.put', () => {
 	it('returns parsed JSON on success', async () => {
 		// Arrange
-		globalThis.fetch = mock(() =>
+		setFetch(() =>
 			Promise.resolve(new Response(JSON.stringify({ id: 1, name: 'updated' }), { status: 200 }))
 		);
 
@@ -200,7 +197,7 @@ describe('api.put', () => {
 describe('api.patch', () => {
 	it('returns parsed JSON on success', async () => {
 		// Arrange
-		globalThis.fetch = mock(() =>
+		setFetch(() =>
 			Promise.resolve(new Response(JSON.stringify({ id: 1, name: 'patched' }), { status: 200 }))
 		);
 
@@ -216,7 +213,7 @@ describe('api.patch', () => {
 describe('api.delete', () => {
 	it('returns ok with null data on 204', async () => {
 		// Arrange
-		globalThis.fetch = mock(() => Promise.resolve(new Response(null, { status: 204 })));
+		setFetch(() => Promise.resolve(new Response(null, { status: 204 })));
 
 		// Act
 		const result = await api.delete('/items/1');
@@ -231,7 +228,7 @@ describe('api.delete', () => {
 describe('api.options', () => {
 	it('returns parsed JSON on 200', async () => {
 		// Arrange
-		globalThis.fetch = mock(() =>
+		setFetch(() =>
 			Promise.resolve(new Response(JSON.stringify({ allow: 'GET, POST' }), { status: 200 }))
 		);
 
@@ -251,7 +248,7 @@ describe('compression', () => {
 		// Arrange
 		const form = new FormData();
 		form.append('name', 'widget');
-		globalThis.fetch = mock((_, init) => {
+		setFetch((_, init) => {
 			capturedInit = init as RequestInit;
 			return Promise.resolve(new Response(null, { status: 204 }));
 		});
@@ -266,7 +263,7 @@ describe('compression', () => {
 	it('passes URLSearchParams through unchanged when compressed', async () => {
 		// Arrange
 		const params = new URLSearchParams({ q: 'test' });
-		globalThis.fetch = mock((_, init) => {
+		setFetch((_, init) => {
 			capturedInit = init as RequestInit;
 			return Promise.resolve(new Response(null, { status: 204 }));
 		});
@@ -281,7 +278,7 @@ describe('compression', () => {
 	it('pipes a ReadableStream through CompressionStream', async () => {
 		// Arrange
 		const stream = new ReadableStream();
-		globalThis.fetch = mock((_, init) => {
+		setFetch((_, init) => {
 			capturedInit = init as RequestInit;
 			return Promise.resolve(new Response(null, { status: 204 }));
 		});
@@ -297,7 +294,7 @@ describe('compression', () => {
 	it('passes a small string through unchanged (below compression threshold)', async () => {
 		// Arrange
 		const small = 'x'.repeat(512);
-		globalThis.fetch = mock((_, init) => {
+		setFetch((_, init) => {
 			capturedInit = init as RequestInit;
 			return Promise.resolve(new Response(null, { status: 204 }));
 		});
@@ -312,7 +309,7 @@ describe('compression', () => {
 	it('compresses a large string into a ReadableStream and sets Content-Encoding header', async () => {
 		// Arrange
 		const large = 'x'.repeat(2000);
-		globalThis.fetch = mock((_, init) => {
+		setFetch((_, init) => {
 			capturedInit = init as RequestInit;
 			return Promise.resolve(new Response(null, { status: 204 }));
 		});
@@ -329,7 +326,7 @@ describe('compression', () => {
 	it('passes a small Blob through unchanged (below compression threshold)', async () => {
 		// Arrange
 		const blob = new Blob(['hello']);
-		globalThis.fetch = mock((_, init) => {
+		setFetch((_, init) => {
 			capturedInit = init as RequestInit;
 			return Promise.resolve(new Response(null, { status: 204 }));
 		});
@@ -344,7 +341,7 @@ describe('compression', () => {
 	it('passes a small ArrayBuffer through unchanged (below compression threshold)', async () => {
 		// Arrange
 		const buffer = new ArrayBuffer(16);
-		globalThis.fetch = mock((_, init) => {
+		setFetch((_, init) => {
 			capturedInit = init as RequestInit;
 			return Promise.resolve(new Response(null, { status: 204 }));
 		});

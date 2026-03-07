@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1] - 2026-03-07
+
+### Fixed
+
+- Skip npm publish step when the package version is already published to avoid failed CI runs ([#16](https://github.com/coloneljade/auldrant-api/pull/16))
+- Use npm view to check if version exists before attempting publish ([#16](https://github.com/coloneljade/auldrant-api/pull/16))
+- Gate merge bot notification on successful publish, not just publish attempt ([#16](https://github.com/coloneljade/auldrant-api/pull/16))
+
 ## [0.1.0] - 2026-03-06
 
 ### Added

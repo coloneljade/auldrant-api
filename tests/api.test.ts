@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, mock } from 'bun:test';
-import { api, MimeType } from '../src/index.ts';
+import { api, CompressionMethod, MimeType } from '../src/index.ts';
 
 const originalFetch = globalThis.fetch;
 
@@ -241,5 +241,118 @@ describe('api.options', () => {
 		// Assert
 		expect(result.ok).toBe(true);
 		expect(result.data).toEqual({ allow: 'GET, POST' });
+	});
+});
+
+describe('compression', () => {
+	let capturedInit: RequestInit | undefined;
+
+	it('passes FormData through unchanged when compressed', async () => {
+		// Arrange
+		const form = new FormData();
+		form.append('name', 'widget');
+		globalThis.fetch = mock((_, init) => {
+			capturedInit = init as RequestInit;
+			return Promise.resolve(new Response(null, { status: 204 }));
+		});
+
+		// Act
+		await api.post('/upload', form, { compression: CompressionMethod.GZIP });
+
+		// Assert
+		expect(capturedInit?.body).toBe(form);
+	});
+
+	it('passes URLSearchParams through unchanged when compressed', async () => {
+		// Arrange
+		const params = new URLSearchParams({ q: 'test' });
+		globalThis.fetch = mock((_, init) => {
+			capturedInit = init as RequestInit;
+			return Promise.resolve(new Response(null, { status: 204 }));
+		});
+
+		// Act
+		await api.post('/search', params, { compression: CompressionMethod.GZIP });
+
+		// Assert
+		expect(capturedInit?.body).toBe(params);
+	});
+
+	it('pipes a ReadableStream through CompressionStream', async () => {
+		// Arrange
+		const stream = new ReadableStream();
+		globalThis.fetch = mock((_, init) => {
+			capturedInit = init as RequestInit;
+			return Promise.resolve(new Response(null, { status: 204 }));
+		});
+
+		// Act
+		await api.post('/upload', stream, { compression: CompressionMethod.GZIP });
+
+		// Assert
+		expect(capturedInit?.body).toBeInstanceOf(ReadableStream);
+		expect(capturedInit?.body).not.toBe(stream);
+	});
+
+	it('passes a small string through unchanged (below compression threshold)', async () => {
+		// Arrange
+		const small = 'x'.repeat(512);
+		globalThis.fetch = mock((_, init) => {
+			capturedInit = init as RequestInit;
+			return Promise.resolve(new Response(null, { status: 204 }));
+		});
+
+		// Act
+		await api.post('/data', small, { compression: CompressionMethod.GZIP });
+
+		// Assert
+		expect(capturedInit?.body).toBe(small);
+	});
+
+	it('compresses a large string into a ReadableStream and sets Content-Encoding header', async () => {
+		// Arrange
+		const large = 'x'.repeat(2000);
+		globalThis.fetch = mock((_, init) => {
+			capturedInit = init as RequestInit;
+			return Promise.resolve(new Response(null, { status: 204 }));
+		});
+
+		// Act
+		await api.post('/data', large, { compression: CompressionMethod.GZIP });
+
+		// Assert
+		expect(capturedInit?.body).toBeInstanceOf(ReadableStream);
+		const headers = capturedInit?.headers as Headers;
+		expect(headers.get('Content-Encoding')).toBe('gzip');
+	});
+
+	it('passes a small Blob through unchanged (below compression threshold)', async () => {
+		// Arrange
+		const blob = new Blob(['hello']);
+		globalThis.fetch = mock((_, init) => {
+			capturedInit = init as RequestInit;
+			return Promise.resolve(new Response(null, { status: 204 }));
+		});
+
+		// Act
+		await api.post('/upload', blob, { compression: CompressionMethod.GZIP });
+
+		// Assert
+		expect(capturedInit?.body).toBe(blob);
+	});
+
+	it('passes a small ArrayBuffer through unchanged (below compression threshold)', async () => {
+		// Arrange
+		const buffer = new ArrayBuffer(16);
+		globalThis.fetch = mock((_, init) => {
+			capturedInit = init as RequestInit;
+			return Promise.resolve(new Response(null, { status: 204 }));
+		});
+
+		// Act
+		await api.post('/upload', buffer, { compression: CompressionMethod.GZIP });
+
+		// Assert
+		expect(capturedInit?.body).toBe(buffer);
 	});
 });

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] - 2026-03-08
+
+### Fixed
+
+- fix(ci): remove setup-node to unblock OIDC npm publish ([#20](https://github.com/coloneljade/auldrant-api/pull/20))
+
 ## [1.0.0] - 2026-03-08
 
 ### Breaking Changes

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1] - 2026-03-08
+
+### Fixed
+
+- fix(ci): add workflow_dispatch trigger and update publish condition ([#21](https://github.com/coloneljade/auldrant-api/pull/21))
+
+
 ## [1.0.0] - 2026-03-08
 
 ### Breaking Changes

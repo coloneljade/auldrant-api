@@ -5,7 +5,10 @@
 	"author": "Colonel Jade <colonel.jade@proton.me> (https://github.com/coloneljade/)",
 	"license": "MIT",
 	"homepage": "https://github.com/coloneljade/auldrant-api#readme",
-	"repository": "github:coloneljade/auldrant-api",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/coloneljade/auldrant-api.git"
+	},
 	"bugs": {
 		"url": "https://github.com/coloneljade/auldrant-api/issues",
 		"email": "colonel.jade@proton.me"

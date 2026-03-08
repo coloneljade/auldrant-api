@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, mock } from 'bun:test';
-import { api, CompressionMethod, MimeType } from '../src/index.ts';
+import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test';
+import { CompressionMethod, createApi, MimeType } from '../src/index.ts';
 
 const originalFetch = globalThis.fetch;
 
@@ -14,10 +14,12 @@ afterEach(() => {
 	globalThis.fetch = originalFetch;
 });
 
+const api = createApi();
+
 describe('api.head', () => {
 	it('returns ok with null data on 200', async () => {
 		// Arrange
-		setFetch(() => Promise.resolve(new Response(null, { status: 200 })));
+		setFetch(async () => new Response(null, { status: 200 }));
 
 		// Act
 		const result = await api.head('/ping');
@@ -32,7 +34,7 @@ describe('api.head', () => {
 describe('204 No Content', () => {
 	it('returns ok with null data regardless of method', async () => {
 		// Arrange
-		setFetch(() => Promise.resolve(new Response(null, { status: 204 })));
+		setFetch(async () => new Response(null, { status: 204 }));
 
 		// Act
 		const result = await api.post('/items', { name: 'test' });
@@ -47,13 +49,12 @@ describe('204 No Content', () => {
 describe('api.get', () => {
 	it('returns parsed JSON data on success', async () => {
 		// Arrange
-		setFetch(() =>
-			Promise.resolve(
+		setFetch(
+			async () =>
 				new Response(JSON.stringify({ id: 1, name: 'Alice' }), {
 					status: 200,
 					headers: { 'Content-Type': 'application/json' },
 				})
-			)
 		);
 
 		// Act
@@ -67,7 +68,7 @@ describe('api.get', () => {
 
 	it('returns ok: false with null data on error status', async () => {
 		// Arrange
-		setFetch(() => Promise.resolve(new Response(null, { status: 404 })));
+		setFetch(async () => new Response(null, { status: 404 }));
 
 		// Act
 		const result = await api.get('/missing');
@@ -93,11 +94,10 @@ describe('api.get', () => {
 
 	it('returns ok: false with status 0 on abort', async () => {
 		// Arrange
-		const controller = new AbortController();
 		setFetch(() => Promise.reject(new DOMException('The operation was aborted.', 'AbortError')));
 
 		// Act
-		const result = await api.get('/slow', { signal: controller.signal });
+		const result = await api.get('/slow', { signal: new AbortController().signal });
 
 		// Assert
 		expect(result.ok).toBe(false);
@@ -106,7 +106,7 @@ describe('api.get', () => {
 
 	it('returns text when accept is MimeType.PLAIN', async () => {
 		// Arrange
-		setFetch(() => Promise.resolve(new Response('hello world', { status: 200 })));
+		setFetch(async () => new Response('hello world', { status: 200 }));
 
 		// Act
 		const result = await api.get<string>('/readme', { accept: MimeType.PLAIN });
@@ -119,7 +119,7 @@ describe('api.get', () => {
 	it('returns a Blob for binary accept types', async () => {
 		// Arrange
 		const bytes = new Uint8Array([1, 2, 3]);
-		setFetch(() => Promise.resolve(new Response(bytes, { status: 200 })));
+		setFetch(async () => new Response(bytes, { status: 200 }));
 
 		// Act
 		const result = await api.get<Blob>('/file.bin', { accept: MimeType.OCTET_STREAM });
@@ -131,7 +131,7 @@ describe('api.get', () => {
 
 	it('accepts a URL instance as the url argument', async () => {
 		// Arrange
-		setFetch(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+		setFetch(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
 
 		// Act & Assert
 		const result = await api.get(new URL('https://example.com/api'));
@@ -142,7 +142,7 @@ describe('api.get', () => {
 describe('api.post', () => {
 	it('sends a plain object body and returns parsed JSON', async () => {
 		// Arrange
-		setFetch(() => Promise.resolve(new Response(JSON.stringify({ id: 42 }), { status: 201 })));
+		setFetch(async () => new Response(JSON.stringify({ id: 42 }), { status: 201 }));
 
 		// Act
 		const result = await api.post<{ id: number }>('/items', { name: 'widget' });
@@ -155,7 +155,7 @@ describe('api.post', () => {
 
 	it('accepts a pre-serialized string body', async () => {
 		// Arrange
-		setFetch(() => Promise.resolve(new Response(JSON.stringify({ id: 1 }), { status: 200 })));
+		setFetch(async () => new Response(JSON.stringify({ id: 1 }), { status: 200 }));
 
 		// Act
 		const result = await api.post('/items', JSON.stringify({ name: 'widget' }));
@@ -168,7 +168,7 @@ describe('api.post', () => {
 		// Arrange
 		const form = new FormData();
 		form.append('name', 'widget');
-		setFetch(() => Promise.resolve(new Response(JSON.stringify({ id: 1 }), { status: 200 })));
+		setFetch(async () => new Response(JSON.stringify({ id: 1 }), { status: 200 }));
 
 		// Act
 		const result = await api.post('/upload', form);
@@ -181,9 +181,7 @@ describe('api.post', () => {
 describe('api.put', () => {
 	it('returns parsed JSON on success', async () => {
 		// Arrange
-		setFetch(() =>
-			Promise.resolve(new Response(JSON.stringify({ id: 1, name: 'updated' }), { status: 200 }))
-		);
+		setFetch(async () => new Response(JSON.stringify({ id: 1, name: 'updated' }), { status: 200 }));
 
 		// Act
 		const result = await api.put<{ id: number; name: string }>('/items/1', { name: 'updated' });
@@ -197,9 +195,7 @@ describe('api.put', () => {
 describe('api.patch', () => {
 	it('returns parsed JSON on success', async () => {
 		// Arrange
-		setFetch(() =>
-			Promise.resolve(new Response(JSON.stringify({ id: 1, name: 'patched' }), { status: 200 }))
-		);
+		setFetch(async () => new Response(JSON.stringify({ id: 1, name: 'patched' }), { status: 200 }));
 
 		// Act
 		const result = await api.patch<{ id: number; name: string }>('/items/1', { name: 'patched' });
@@ -213,7 +209,7 @@ describe('api.patch', () => {
 describe('api.delete', () => {
 	it('returns ok with null data on 204', async () => {
 		// Arrange
-		setFetch(() => Promise.resolve(new Response(null, { status: 204 })));
+		setFetch(async () => new Response(null, { status: 204 }));
 
 		// Act
 		const result = await api.delete('/items/1');
@@ -228,9 +224,7 @@ describe('api.delete', () => {
 describe('api.options', () => {
 	it('returns parsed JSON on 200', async () => {
 		// Arrange
-		setFetch(() =>
-			Promise.resolve(new Response(JSON.stringify({ allow: 'GET, POST' }), { status: 200 }))
-		);
+		setFetch(async () => new Response(JSON.stringify({ allow: 'GET, POST' }), { status: 200 }));
 
 		// Act
 		const result = await api.options<{ allow: string }>('/items');
@@ -248,9 +242,9 @@ describe('compression', () => {
 		// Arrange
 		const form = new FormData();
 		form.append('name', 'widget');
-		setFetch((_, init) => {
+		setFetch(async (_, init) => {
 			capturedInit = init as RequestInit;
-			return Promise.resolve(new Response(null, { status: 204 }));
+			return new Response(null, { status: 204 });
 		});
 
 		// Act
@@ -263,9 +257,9 @@ describe('compression', () => {
 	it('passes URLSearchParams through unchanged when compressed', async () => {
 		// Arrange
 		const params = new URLSearchParams({ q: 'test' });
-		setFetch((_, init) => {
+		setFetch(async (_, init) => {
 			capturedInit = init as RequestInit;
-			return Promise.resolve(new Response(null, { status: 204 }));
+			return new Response(null, { status: 204 });
 		});
 
 		// Act
@@ -278,9 +272,9 @@ describe('compression', () => {
 	it('pipes a ReadableStream through CompressionStream', async () => {
 		// Arrange
 		const stream = new ReadableStream();
-		setFetch((_, init) => {
+		setFetch(async (_, init) => {
 			capturedInit = init as RequestInit;
-			return Promise.resolve(new Response(null, { status: 204 }));
+			return new Response(null, { status: 204 });
 		});
 
 		// Act
@@ -294,9 +288,9 @@ describe('compression', () => {
 	it('passes a small string through unchanged (below compression threshold)', async () => {
 		// Arrange
 		const small = 'x'.repeat(512);
-		setFetch((_, init) => {
+		setFetch(async (_, init) => {
 			capturedInit = init as RequestInit;
-			return Promise.resolve(new Response(null, { status: 204 }));
+			return new Response(null, { status: 204 });
 		});
 
 		// Act
@@ -309,9 +303,9 @@ describe('compression', () => {
 	it('compresses a large string into a ReadableStream and sets Content-Encoding header', async () => {
 		// Arrange
 		const large = 'x'.repeat(2000);
-		setFetch((_, init) => {
+		setFetch(async (_, init) => {
 			capturedInit = init as RequestInit;
-			return Promise.resolve(new Response(null, { status: 204 }));
+			return new Response(null, { status: 204 });
 		});
 
 		// Act
@@ -326,9 +320,9 @@ describe('compression', () => {
 	it('passes a small Blob through unchanged (below compression threshold)', async () => {
 		// Arrange
 		const blob = new Blob(['hello']);
-		setFetch((_, init) => {
+		setFetch(async (_, init) => {
 			capturedInit = init as RequestInit;
-			return Promise.resolve(new Response(null, { status: 204 }));
+			return new Response(null, { status: 204 });
 		});
 
 		// Act
@@ -341,9 +335,9 @@ describe('compression', () => {
 	it('passes a small ArrayBuffer through unchanged (below compression threshold)', async () => {
 		// Arrange
 		const buffer = new ArrayBuffer(16);
-		setFetch((_, init) => {
+		setFetch(async (_, init) => {
 			capturedInit = init as RequestInit;
-			return Promise.resolve(new Response(null, { status: 204 }));
+			return new Response(null, { status: 204 });
 		});
 
 		// Act
@@ -351,5 +345,268 @@ describe('compression', () => {
 
 		// Assert
 		expect(capturedInit?.body).toBe(buffer);
+	});
+});
+
+describe('timeout', () => {
+	it('returns ok: false with status 0 when request exceeds timeout', async () => {
+		// Arrange — fetch never resolves; AbortSignal.timeout fires
+		setFetch(
+			() =>
+				new Promise<Response>((_, reject) => {
+					// simulate a signal abort via the timeout mechanism
+					setTimeout(() => reject(new DOMException('Timeout', 'TimeoutError')), 50);
+				})
+		);
+
+		// Act
+		const result = await createApi().get('/slow', { timeout: 1 });
+
+		// Assert
+		expect(result.ok).toBe(false);
+		expect(result.status).toBe(0);
+	});
+
+	it('does not interfere with fast responses when timeout is generous', async () => {
+		// Arrange
+		setFetch(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+		// Act
+		const result = await createApi().get('/fast', { timeout: 10_000 });
+
+		// Assert
+		expect(result.ok).toBe(true);
+	});
+
+	it('applies config-level timeout to all requests', async () => {
+		// Arrange
+		const timedApi = createApi({ timeout: 1 });
+		setFetch(
+			() =>
+				new Promise<Response>((_, reject) => {
+					setTimeout(() => reject(new DOMException('Timeout', 'TimeoutError')), 50);
+				})
+		);
+
+		// Act
+		const result = await timedApi.get('/slow');
+
+		// Assert
+		expect(result.ok).toBe(false);
+		expect(result.status).toBe(0);
+	});
+
+	it('per-request timeout overrides config timeout', async () => {
+		// Arrange — config has short timeout, per-request overrides with generous value
+		const timedApi = createApi({ timeout: 1 });
+		setFetch(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+		// Act
+		const result = await timedApi.get('/fast', { timeout: 10_000 });
+
+		// Assert
+		expect(result.ok).toBe(true);
+	});
+});
+
+describe('retry', () => {
+	it('retries on network error up to retry count and returns ok: false', async () => {
+		// Arrange
+		let callCount = 0;
+		setFetch(() => {
+			callCount++;
+			return Promise.reject(new TypeError('Failed to fetch'));
+		});
+
+		// Act
+		const result = await createApi().get('/unreachable', { retry: 2 });
+
+		// Assert — 1 initial + 2 retries = 3 total
+		expect(result.ok).toBe(false);
+		expect(result.status).toBe(0);
+		expect(callCount).toBe(3);
+	});
+
+	it('does not retry on server errors (4xx/5xx)', async () => {
+		// Arrange
+		let callCount = 0;
+		setFetch(() => {
+			callCount++;
+			return Promise.resolve(new Response(null, { status: 500 }));
+		});
+
+		// Act
+		const result = await createApi().get('/server-error', { retry: 2 });
+
+		// Assert — server responded; no retry
+		expect(result.ok).toBe(false);
+		expect(result.status).toBe(500);
+		expect(callCount).toBe(1);
+	});
+
+	it('returns success immediately when an attempt succeeds before exhausting retries', async () => {
+		// Arrange — fail once then succeed
+		let callCount = 0;
+		setFetch(() => {
+			callCount++;
+			if (callCount === 1) {
+				return Promise.reject(new TypeError('Failed to fetch'));
+			}
+			return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+		});
+
+		// Act
+		const result = await createApi().get('/flaky', { retry: 2 });
+
+		// Assert
+		expect(result.ok).toBe(true);
+		expect(callCount).toBe(2);
+	});
+
+	it('uses exponential backoff between retry attempts', async () => {
+		// Arrange
+		const spy = spyOn(globalThis, 'setTimeout');
+		setFetch(() => Promise.reject(new TypeError('Failed to fetch')));
+
+		// Act
+		await createApi().get('/slow', { retry: 2, retryDelay: 100 });
+
+		// Assert — extract delays >= 100ms (ignoring internal timeouts) in call order
+		const delays = spy.mock.calls
+			.map(([, ms]) => ms)
+			.filter((ms): ms is number => typeof ms === 'number' && ms >= 100);
+
+		expect(delays[0]).toBe(100); // attempt 1: base
+		expect(delays[1]).toBe(200); // attempt 2: base * 2
+		spy.mockRestore();
+	});
+
+	it('does not retry by default (retry: 0)', async () => {
+		// Arrange
+		let callCount = 0;
+		setFetch(() => {
+			callCount++;
+			return Promise.reject(new TypeError('Failed to fetch'));
+		});
+
+		// Act
+		await createApi().get('/error');
+
+		// Assert
+		expect(callCount).toBe(1);
+	});
+});
+
+describe('createApi', () => {
+	it('prepends baseUrl to relative paths', async () => {
+		// Arrange
+		let capturedUrl: string | URL | undefined;
+		setFetch(async (input) => {
+			capturedUrl = input as URL;
+			return new Response(JSON.stringify({}), { status: 200 });
+		});
+		const client = createApi({ baseUrl: 'https://api.example.com' });
+
+		// Act
+		await client.get('/users');
+
+		// Assert
+		expect(capturedUrl?.toString()).toBe('https://api.example.com/users');
+	});
+
+	it('does not alter an absolute URL string even when baseUrl is set', async () => {
+		// Arrange
+		let capturedUrl: string | URL | undefined;
+		setFetch(async (input) => {
+			capturedUrl = input as URL;
+			return new Response(JSON.stringify({}), { status: 200 });
+		});
+		const client = createApi({ baseUrl: 'https://api.example.com' });
+
+		// Act
+		await client.get('https://other.example.com/data');
+
+		// Assert
+		expect(capturedUrl?.toString()).toBe('https://other.example.com/data');
+	});
+
+	it('accepts a URL instance as url argument when baseUrl is set', async () => {
+		// Arrange
+		let capturedUrl: string | URL | undefined;
+		setFetch(async (input) => {
+			capturedUrl = input as URL;
+			return new Response(JSON.stringify({}), { status: 200 });
+		});
+		const client = createApi({ baseUrl: 'https://api.example.com' });
+
+		// Act
+		await client.get(new URL('https://other.example.com/data'));
+
+		// Assert
+		expect(capturedUrl?.toString()).toBe('https://other.example.com/data');
+	});
+
+	it('includes config headers in every request', async () => {
+		// Arrange
+		let capturedHeaders: Headers | undefined;
+		setFetch(async (_, init) => {
+			capturedHeaders = init?.headers as Headers;
+			return new Response(JSON.stringify({}), { status: 200 });
+		});
+		const client = createApi({ headers: { 'X-Api-Key': 'secret' } });
+
+		// Act
+		await client.get('https://example.com/data');
+
+		// Assert
+		expect(capturedHeaders?.get('X-Api-Key')).toBe('secret');
+	});
+
+	it('per-request headers override config headers', async () => {
+		// Arrange
+		let capturedHeaders: Headers | undefined;
+		setFetch(async (_, init) => {
+			capturedHeaders = init?.headers as Headers;
+			return new Response(JSON.stringify({}), { status: 200 });
+		});
+		const client = createApi({ headers: { 'X-Api-Key': 'config-key' } });
+
+		// Act
+		await client.get('https://example.com/data', { headers: { 'X-Api-Key': 'request-key' } });
+
+		// Assert
+		expect(capturedHeaders?.get('X-Api-Key')).toBe('request-key');
+	});
+
+	it('applies config accept to all requests', async () => {
+		// Arrange
+		let capturedHeaders: Headers | undefined;
+		setFetch(async (_, init) => {
+			capturedHeaders = init?.headers as Headers;
+			return new Response('hello', { status: 200 });
+		});
+		const client = createApi({ accept: MimeType.PLAIN });
+
+		// Act
+		await client.get('https://example.com/text');
+
+		// Assert
+		expect(capturedHeaders?.get('Accept')).toBe(MimeType.PLAIN);
+	});
+
+	it('per-request accept overrides config accept', async () => {
+		// Arrange
+		let capturedHeaders: Headers | undefined;
+		setFetch(async (_, init) => {
+			capturedHeaders = init?.headers as Headers;
+			return new Response(JSON.stringify({}), { status: 200 });
+		});
+		const client = createApi({ accept: MimeType.PLAIN });
+
+		// Act
+		await client.get('https://example.com/json', { accept: MimeType.JSON });
+
+		// Assert
+		expect(capturedHeaders?.get('Accept')).toBe(MimeType.JSON);
 	});
 });

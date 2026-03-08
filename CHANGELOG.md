@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.0] - 2026-03-08
+
+### Breaking Changes
+
+- Replace exported `api` singleton with `createApi()` factory function — callers must update from `api.get(...)` to `const api = createApi(); api.get(...)` ([#17](https://github.com/coloneljade/auldrant-api/pull/17))
+
+### Added
+
+- `createApi(config?)` factory function for creating configured API instances ([#17](https://github.com/coloneljade/auldrant-api/pull/17))
+- `ApiConfig` interface for instance-level defaults: `baseUrl`, `headers`, `accept`, `timeout` ([#17](https://github.com/coloneljade/auldrant-api/pull/17))
+- Timeout support via `AbortSignal.timeout()` with caller signal combining ([#17](https://github.com/coloneljade/auldrant-api/pull/17))
+- Retry with exponential backoff on network failures ([#17](https://github.com/coloneljade/auldrant-api/pull/17))
+- `ApiInstance` and `ApiConfig` type exports ([#17](https://github.com/coloneljade/auldrant-api/pull/17))
+
 ## [0.1.1] - 2026-03-07
 
 ### Fixed

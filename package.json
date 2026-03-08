@@ -1,6 +1,6 @@
 {
 	"name": "@auldrant/api",
-	"version": "0.1.1",
+	"version": "1.0.0",
 	"description": "Simple library for working with APIs",
 	"author": "Colonel Jade <colonel.jade@proton.me> (https://github.com/coloneljade/)",
 	"license": "MIT",

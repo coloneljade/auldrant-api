@@ -114,6 +114,20 @@ export interface RequestOptions {
 	headers?: HeadersInit;
 	/** AbortSignal to cancel the request. */
 	signal?: AbortSignal;
+	/** Abort the request after this many milliseconds (raises a TimeoutError). */
+	timeout?: number;
+	/**
+	 * Maximum number of additional attempts on network failure (status 0).
+	 * Server responses (4xx, 5xx) are never retried — they are intentional responses.
+	 * Defaults to 0 (no retry).
+	 */
+	retry?: number;
+	/**
+	 * Base delay in milliseconds for exponential backoff between retry attempts.
+	 * Attempt 1 waits `retryDelay` ms, attempt 2 waits `retryDelay * 2` ms, etc.
+	 * Defaults to 0 (no delay).
+	 */
+	retryDelay?: number;
 }
 
 /** Options for requests that carry a body (POST, PUT, PATCH). */
@@ -131,3 +145,42 @@ export interface RequestBodyOptions extends RequestOptions {
 export type ApiResponse<T> =
 	| { ok: true; data: T | null; status: number }
 	| { ok: false; data: null; status: number };
+
+/**
+ * Configuration for a {@link createApi} instance.
+ * All fields are optional. Per-request options always take precedence over these defaults.
+ */
+export interface ApiConfig {
+	/** Base URL prepended to all relative request paths. Absolute URLs and URL
+	 *  instances bypass this automatically. */
+	baseUrl?: string | URL;
+	/** Default headers included in every request. Per-request headers take precedence. */
+	headers?: HeadersInit;
+	/** Default Accept MIME type for all requests. Defaults to {@link MimeType.JSON}. */
+	accept?: MimeType;
+	/** Default timeout in milliseconds for all requests. */
+	timeout?: number;
+}
+
+/** A configured API client returned by {@link createApi}. */
+export interface ApiInstance {
+	get<T>(url: string | URL, options?: RequestOptions): Promise<ApiResponse<T>>;
+	post<T>(
+		url: string | URL,
+		body?: BodyInit | object,
+		options?: RequestBodyOptions
+	): Promise<ApiResponse<T>>;
+	put<T>(
+		url: string | URL,
+		body?: BodyInit | object,
+		options?: RequestBodyOptions
+	): Promise<ApiResponse<T>>;
+	patch<T>(
+		url: string | URL,
+		body?: BodyInit | object,
+		options?: RequestBodyOptions
+	): Promise<ApiResponse<T>>;
+	delete<T>(url: string | URL, options?: RequestOptions): Promise<ApiResponse<T>>;
+	head(url: string | URL, options?: RequestOptions): Promise<ApiResponse<null>>;
+	options<T>(url: string | URL, options?: RequestOptions): Promise<ApiResponse<T>>;
+}

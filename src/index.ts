@@ -1,5 +1,7 @@
-export { api } from './api.ts';
+export { createApi } from './api.ts';
 export {
+	type ApiConfig,
+	type ApiInstance,
 	type ApiResponse,
 	CompressionMethod,
 	HttpMethod,

@@ -19,7 +19,6 @@
 		"noImplicitReturns": true,
 		"allowUnusedLabels": false,
 		"allowUnreachableCode": false,
-		"exactOptionalPropertyTypes": true,
 		"forceConsistentCasingInFileNames": true,
 
 		"noUnusedLocals": true,

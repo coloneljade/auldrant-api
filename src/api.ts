@@ -164,15 +164,15 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 			retryDelay = 0,
 		} = options;
 
-		const resolvedUrl = config.baseUrl != null ? new URL(url, config.baseUrl) : url;
+		const resolvedUrl = config.baseUrl == null ? url : new URL(url, config.baseUrl);
 
 		const effectiveTimeout = options.timeout ?? config.timeout;
 		const effectiveSignal =
 			signal != null && effectiveTimeout != null
 				? AbortSignal.any([signal, AbortSignal.timeout(effectiveTimeout)])
-				: effectiveTimeout != null
-					? AbortSignal.timeout(effectiveTimeout)
-					: signal;
+				: effectiveTimeout == null
+					? signal
+					: AbortSignal.timeout(effectiveTimeout);
 
 		let attempt = 0;
 		while (true) {
@@ -184,9 +184,9 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 						: null;
 
 				const headers = buildHeaders(
-					body != null ? contentType : undefined,
+					body == null ? undefined : contentType,
 					accept,
-					body != null ? compression : undefined,
+					body == null ? undefined : compression,
 					config.headers,
 					extraHeaders,
 					body
@@ -252,7 +252,7 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 			return request<T>(
 				url,
 				HttpMethod.POST,
-				body != null ? serializeBody(body) : undefined,
+				body == null ? undefined : serializeBody(body),
 				options
 			);
 		},
@@ -271,7 +271,7 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 			return request<T>(
 				url,
 				HttpMethod.PUT,
-				body != null ? serializeBody(body) : undefined,
+				body == null ? undefined : serializeBody(body),
 				options
 			);
 		},
@@ -290,7 +290,7 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 			return request<T>(
 				url,
 				HttpMethod.PATCH,
-				body != null ? serializeBody(body) : undefined,
+				body == null ? undefined : serializeBody(body),
 				options
 			);
 		},

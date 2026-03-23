@@ -7,7 +7,7 @@ import {
 	MimeType,
 	type RequestBodyOptions,
 	type RequestOptions,
-} from './static.ts';
+} from '@static';
 
 /** Payloads smaller than this threshold are not worth the CompressionStream setup overhead. */
 const MIN_COMPRESSION_BYTES = 1024;

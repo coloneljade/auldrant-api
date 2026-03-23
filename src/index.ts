@@ -1,4 +1,3 @@
-export { createApi } from './api.ts';
 export {
 	type ApiConfig,
 	type ApiInstance,
@@ -9,4 +8,5 @@ export {
 	MimeType,
 	type RequestBodyOptions,
 	type RequestOptions,
-} from './static.ts';
+} from '@static';
+export { createApi } from './api.ts';

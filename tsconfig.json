@@ -25,9 +25,8 @@
 		"noUnusedParameters": true,
 		"noPropertyAccessFromIndexSignature": true,
 
-		"baseUrl": "./src",
 		"paths": {
-			"@static": ["./static.ts"]
+			"@static": ["./src/static.ts"]
 		}
 	},
 	"include": ["src"],

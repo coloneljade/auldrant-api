@@ -1,5 +1,9 @@
 # @auldrant/api
 
+[![npm](https://img.shields.io/npm/v/@auldrant/api?color=blue)](https://www.npmjs.com/package/@auldrant/api)
+[![CI](https://img.shields.io/github/actions/workflow/status/coloneljade/auldrant-api/ci.yml?label=CI)](https://github.com/coloneljade/auldrant-api/actions)
+[![license](https://img.shields.io/github/license/coloneljade/auldrant-api)](https://github.com/coloneljade/auldrant-api/blob/main/LICENSE)
+
 @auldrant/api is a client-side library that makes REST API calls simple and correct. It wraps the [Fetch API][fetch] with ergonomic method helpers, automatic JSON serialization, and a discriminated union response type so you always know whether a request succeeded.
 
 We recommend using [Bun](https://bun.sh) to work with @auldrant/api.

@@ -28,7 +28,7 @@
 		"**/dist": true,
 		"bun.lock": true
 	},
-	"cSpell.words": ["Auldrant", "biomejs", "lefthook", "vite"],
+	"cSpell.words": ["Auldrant", "biomejs", "githooks", "vite"],
 	"github.gitProtocol": "ssh",
 	"chat.disableAIFeatures": true
 }

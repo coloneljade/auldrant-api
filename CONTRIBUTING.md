@@ -38,6 +38,18 @@ By signing off on your commit, you confirm that you have the right to submit the
 > maintained indefinitely and may be redistributed consistent with
 > this project or the open source license(s) involved.
 
+## Development
+
+We use [Bun](https://bun.sh) for package management, tests, and tooling.
+
+```bash
+bun install         # install dev dependencies
+bun test            # run the test suite
+bun run typecheck   # run the TypeScript compiler
+bun run check:fix   # run Biome lint + format with auto-fix
+bun run build       # build the distributable bundle
+```
+
 ## Signing your commit
 
 Signing off is easy, just use the `-s` flag in your commit!

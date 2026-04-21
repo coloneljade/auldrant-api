@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-04-21
+
+### Fixed
+
+- Correct request semantics for typed arrays, retries, and parse errors ([#36](https://github.com/coloneljade/auldrant-api/pull/36))
+
 ## [1.0.1] - 2026-03-08
 
 ### Fixed

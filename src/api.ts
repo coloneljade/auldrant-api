@@ -120,6 +120,14 @@ function serializeBody(body: unknown): BodyInit {
 	) {
 		return body;
 	}
+	// ArrayBuffer.isView covers all TypedArrays and DataView. The narrow type is
+	// ArrayBufferView<ArrayBufferLike>, which is broader than BodyInit's
+	// ArrayBufferView<ArrayBuffer> (BodyInit excludes SharedArrayBuffer). fetch()
+	// already rejects SAB-backed views at runtime; the cast is safe for the
+	// documented BodyInit inputs.
+	if (ArrayBuffer.isView(body)) {
+		return body as BodyInit;
+	}
 	return JSON.stringify(body);
 }
 
@@ -167,58 +175,52 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 		} = options;
 
 		const resolvedUrl = config.baseUrl == null ? url : new URL(url, config.baseUrl);
-
 		const effectiveTimeout = options.timeout ?? config.timeout;
-		const effectiveSignal =
-			signal != null && effectiveTimeout != null
-				? AbortSignal.any([signal, AbortSignal.timeout(effectiveTimeout)])
-				: effectiveTimeout == null
-					? signal
-					: AbortSignal.timeout(effectiveTimeout);
 
 		let attempt = 0;
 		while (true) {
+			// Rebuild the signal each iteration so AbortSignal.timeout gets a fresh
+			// per-attempt budget; the caller's signal is reused by reference so a
+			// single abort still propagates.
+			const iterSignal =
+				signal != null && effectiveTimeout != null
+					? AbortSignal.any([signal, AbortSignal.timeout(effectiveTimeout)])
+					: effectiveTimeout == null
+						? signal
+						: AbortSignal.timeout(effectiveTimeout);
+
+			// Per RFC 9110 §9.3.1, GET requests MUST NOT have a body
+			const sendBody =
+				body != null && method !== HttpMethod.GET && method !== HttpMethod.HEAD
+					? compress(body, compression)
+					: null;
+
+			const headers = buildHeaders(
+				body == null ? undefined : contentType,
+				accept,
+				body == null ? undefined : compression,
+				config.headers,
+				extraHeaders,
+				body
+			);
+
+			const init: RequestInit = {
+				method,
+				body: sendBody,
+				headers,
+			};
+			if (iterSignal != null) {
+				init.signal = iterSignal;
+			}
+
+			let resp: Response;
 			try {
-				// Per RFC 9110 §9.3.1, GET requests MUST NOT have a body
-				const sendBody =
-					body != null && method !== HttpMethod.GET && method !== HttpMethod.HEAD
-						? compress(body, compression)
-						: null;
-
-				const headers = buildHeaders(
-					body == null ? undefined : contentType,
-					accept,
-					body == null ? undefined : compression,
-					config.headers,
-					extraHeaders,
-					body
-				);
-
-				const init: RequestInit = {
-					method,
-					body: sendBody,
-					headers,
-				};
-				if (effectiveSignal != null) {
-					init.signal = effectiveSignal;
+				resp = await fetch(resolvedUrl, init);
+			} catch {
+				// Caller-initiated abort short-circuits — the user said stop, so stop.
+				if (signal?.aborted === true) {
+					return { ok: false, data: null, status: 0 };
 				}
-
-				const resp = await fetch(resolvedUrl, init);
-
-				if (!resp.ok) {
-					return { ok: false, data: null, status: resp.status };
-				}
-
-				// Per RFC 9110 §9.3.5, HEAD responses have no body; 204 means No Content.
-				if (method === HttpMethod.HEAD || resp.status === 204) {
-					return { ok: true, data: null, status: resp.status };
-				}
-
-				const data = await parseBody<T>(resp, accept);
-				return { ok: true, data, status: resp.status };
-			} catch (_error: unknown) {
-				// Network errors, aborts, and other client-side failures get status 0
-				// (not 500 — that would misrepresent a server error)
 				if (attempt >= maxRetries) {
 					return { ok: false, data: null, status: 0 };
 				}
@@ -226,6 +228,26 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 				if (retryDelay > 0) {
 					await sleep(retryDelay * 2 ** (attempt - 1));
 				}
+				continue;
+			}
+
+			if (!resp.ok) {
+				return { ok: false, data: null, status: resp.status };
+			}
+
+			// Per RFC 9110 §9.3.5, HEAD responses have no body; 204 means No Content.
+			if (method === HttpMethod.HEAD || resp.status === 204) {
+				return { ok: true, data: null, status: resp.status };
+			}
+
+			// Parse failures mean the server responded but the body doesn't match
+			// `accept`. Return the actual status, not 0 (which means "no response"),
+			// and do not retry — another attempt will fail the same way.
+			try {
+				const data = await parseBody<T>(resp, accept);
+				return { ok: true, data, status: resp.status };
+			} catch {
+				return { ok: false, data: null, status: resp.status };
 			}
 		}
 	}

@@ -176,6 +176,38 @@ describe('api.post', () => {
 		// Assert
 		expect(result.ok).toBe(true);
 	});
+
+	it('sends Uint8Array bodies as-is, not JSON-stringified', async () => {
+		// Arrange
+		let captured: BodyInit | null | undefined;
+		setFetch(async (_, init) => {
+			captured = init?.body;
+			return new Response(null, { status: 204 });
+		});
+		const bytes = new Uint8Array([72, 105]);
+
+		// Act
+		await api.post('/bin', bytes);
+
+		// Assert
+		expect(captured).toBe(bytes);
+	});
+
+	it('sends DataView bodies as-is, not JSON-stringified', async () => {
+		// Arrange
+		let captured: BodyInit | null | undefined;
+		setFetch(async (_, init) => {
+			captured = init?.body;
+			return new Response(null, { status: 204 });
+		});
+		const view = new DataView(new ArrayBuffer(8));
+
+		// Act
+		await api.post('/bin', view);
+
+		// Assert
+		expect(captured).toBe(view);
+	});
 });
 
 describe('api.put', () => {
@@ -491,6 +523,94 @@ describe('retry', () => {
 
 		// Act
 		await createApi().get('/error');
+
+		// Assert
+		expect(callCount).toBe(1);
+	});
+
+	it('short-circuits when the caller signal is already aborted', async () => {
+		// Arrange
+		let callCount = 0;
+		setFetch(async (_, init) => {
+			callCount++;
+			if (init?.signal?.aborted) {
+				throw new DOMException('Aborted', 'AbortError');
+			}
+			return new Response(null, { status: 200 });
+		});
+		const controller = new AbortController();
+		controller.abort();
+
+		// Act
+		const result = await createApi().get('/x', {
+			signal: controller.signal,
+			retry: 3,
+			retryDelay: 0,
+		});
+
+		// Assert — caller said stop, stop immediately
+		expect(result.ok).toBe(false);
+		expect(result.status).toBe(0);
+		expect(callCount).toBeLessThanOrEqual(1);
+	});
+
+	it('retries timeouts with a fresh per-attempt signal', async () => {
+		// Arrange
+		let callCount = 0;
+		let sawAbortedOnEntry = false;
+		setFetch(async (_, init) => {
+			callCount++;
+			if (init?.signal?.aborted === true) {
+				sawAbortedOnEntry = true;
+			}
+			return new Promise<Response>((_, reject) => {
+				init?.signal?.addEventListener('abort', () => {
+					reject(new DOMException('Timeout', 'AbortError'));
+				});
+			});
+		});
+
+		// Act
+		await createApi().get('/slow', { timeout: 10, retry: 2, retryDelay: 0 });
+
+		// Assert — each attempt gets a fresh signal, so none arrive pre-aborted
+		expect(callCount).toBe(3);
+		expect(sawAbortedOnEntry).toBe(false);
+	});
+});
+
+describe('parse errors', () => {
+	it('reports the server status when a 2xx body cannot be parsed', async () => {
+		// Arrange — server returns HTML but the client asked for JSON
+		setFetch(
+			async () =>
+				new Response('<html>not json</html>', {
+					status: 200,
+					headers: { 'Content-Type': 'text/html' },
+				})
+		);
+
+		// Act
+		const result = await createApi().get('/x');
+
+		// Assert — status 0 would mean "no response"; the server did respond
+		expect(result.ok).toBe(false);
+		expect(result.status).toBe(200);
+	});
+
+	it('does not retry on a parse failure', async () => {
+		// Arrange
+		let callCount = 0;
+		setFetch(async () => {
+			callCount++;
+			return new Response('<html>bad</html>', {
+				status: 200,
+				headers: { 'Content-Type': 'text/html' },
+			});
+		});
+
+		// Act — server gave a deterministic response; retry would be pointless
+		await createApi().get('/x', { retry: 3 });
 
 		// Assert
 		expect(callCount).toBe(1);

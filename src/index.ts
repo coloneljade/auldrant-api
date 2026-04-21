@@ -3,6 +3,7 @@ export {
 	type ApiInstance,
 	type ApiResponse,
 	CompressionMethod,
+	type HeadResponse,
 	HttpMethod,
 	HttpStatus,
 	MimeType,

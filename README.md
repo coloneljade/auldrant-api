@@ -20,9 +20,9 @@ import { createApi } from '@auldrant/api';
 const api = createApi();
 
 const result = await api.get<User[]>('/api/users');
-if (result.ok) {
-  console.log(result.data); // User[]
-} else {
+if (result.ok && !result.empty) {
+  console.log(result.data); // User[] — no null check needed
+} else if (!result.ok) {
   console.error(result.status); // HTTP status code, or 0 for network errors
 }
 ```
@@ -46,7 +46,7 @@ Per-request options always override instance defaults.
 
 ## Method helpers
 
-All helpers are methods on the instance returned by `createApi` and return `Promise<ApiResponse<T>>`.
+All helpers are methods on the instance returned by `createApi`. Most return `Promise<ApiResponse<T>>`; `.head` returns `Promise<HeadResponse>` (HEAD responses are always empty).
 
 | Method | Signature |
 |--------|-----------|
@@ -64,11 +64,22 @@ Plain objects passed as `body` are automatically serialized to JSON.
 
 ```ts
 type ApiResponse<T> =
-  | { ok: true;  data: T | null; status: number }
-  | { ok: false; data: null;     status: number };
+  | { ok: true;  empty: false; data: T;    status: number }
+  | { ok: true;  empty: true;  data: null; status: number }
+  | { ok: false;               data: null; status: number };
 ```
 
-Use `ok` to narrow the type. Status `0` means a network error, timeout, or aborted request.
+Three variants, discriminated by `ok` and `empty`:
+
+| Check | `data` type | When |
+|-------|-------------|------|
+| `r.ok && !r.empty` | `T` | Success with body — the common case, no null check needed |
+| `r.ok && r.empty`  | `null` | 204 No Content, or HEAD response |
+| `!r.ok`            | `null` | Network failure, timeout, parse error, or non-2xx status |
+
+Status `0` means a network error, timeout, or aborted request. `head()` returns a narrower `HeadResponse` type — the non-empty success variant is omitted because HEAD responses never carry a body ([RFC 9110 §9.3.5][rfc-head]).
+
+[rfc-head]: https://www.rfc-editor.org/rfc/rfc9110#section-9.3.5
 
 ## Options reference
 
@@ -167,6 +178,7 @@ await api.post('/ingest', data, {
 | `ApiConfig` | type | Config object for `createApi` |
 | `ApiInstance` | type | Return type of `createApi` |
 | `ApiResponse` | type | Discriminated union response type |
+| `HeadResponse` | type | Response shape for HEAD requests (always `empty: true` on success) |
 | `RequestOptions` | type | Options for GET/DELETE/HEAD/OPTIONS |
 | `RequestBodyOptions` | type | Options for POST/PUT/PATCH |
 | `HttpMethod` | enum | GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS |

@@ -3,6 +3,7 @@ import {
 	type ApiInstance,
 	type ApiResponse,
 	type CompressionMethod,
+	type HeadResponse,
 	HttpMethod,
 	MimeType,
 	type RequestBodyOptions,
@@ -144,7 +145,7 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
  *   timeout: 5000,
  * });
  * const result = await api.get<User[]>('/users');
- * if (result.ok) {
+ * if (result.ok && !result.empty) {
  *   console.log(result.data); // User[]
  * }
  * ```
@@ -237,7 +238,7 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 
 			// Per RFC 9110 §9.3.5, HEAD responses have no body; 204 means No Content.
 			if (method === HttpMethod.HEAD || resp.status === 204) {
-				return { ok: true, data: null, status: resp.status };
+				return { ok: true, empty: true, data: null, status: resp.status };
 			}
 
 			// Parse failures mean the server responded but the body doesn't match
@@ -245,7 +246,7 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 			// and do not retry — another attempt will fail the same way.
 			try {
 				const data = await parseBody<T>(resp, accept);
-				return { ok: true, data, status: resp.status };
+				return { ok: true, empty: false, data, status: resp.status };
 			} catch {
 				return { ok: false, data: null, status: resp.status };
 			}
@@ -333,8 +334,8 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 		 * @param url - Request URL
 		 * @param options - Request options (headers, signal, timeout)
 		 */
-		head(url: string | URL, options?: RequestOptions): Promise<ApiResponse<null>> {
-			return request<null>(url, HttpMethod.HEAD, undefined, options);
+		head(url: string | URL, options?: RequestOptions): Promise<HeadResponse> {
+			return request<null>(url, HttpMethod.HEAD, undefined, options) as Promise<HeadResponse>;
 		},
 
 		/**

@@ -1,3 +1,4 @@
+/** Standard HTTP status codes. See RFC 9110 §15. */
 export enum HttpStatus {
 	OK = 200,
 	CREATED = 201,
@@ -52,6 +53,7 @@ export enum HttpStatus {
 	NETWORK_AUTHENTICATION_REQUIRED = 511,
 }
 
+/** Common MIME type strings. See IANA Media Types registry. */
 export enum MimeType {
 	// Text types
 	HTML = 'text/html',
@@ -91,6 +93,7 @@ export enum MimeType {
 	TAR = 'application/x-tar',
 }
 
+/** HTTP request methods. See RFC 9110 §9.3. */
 export enum HttpMethod {
 	GET = 'GET',
 	POST = 'POST',
@@ -101,6 +104,7 @@ export enum HttpMethod {
 	HEAD = 'HEAD',
 }
 
+/** Compression algorithms supported by the Compression Streams API. */
 export enum CompressionMethod {
 	GZIP = 'gzip',
 	DEFLATE = 'deflate',

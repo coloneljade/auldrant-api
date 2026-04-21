@@ -45,9 +45,10 @@ function compress(content: BodyInit, method?: CompressionMethod): BodyInit {
 		return content;
 	}
 
-	// string, Blob, ArrayBuffer, ArrayBufferView — wrap in Blob for streaming.
-	// Workaround: CompressionStream requires a ReadableStream input.
-	return new Blob([content as BlobPart]).stream().pipeThrough(new CompressionStream(method));
+	// string, Blob, ArrayBuffer, ArrayBufferView — stream via Blob.
+	// CompressionStream requires a ReadableStream input; Blob provides .stream() directly.
+	const source = content instanceof Blob ? content : new Blob([content as BlobPart]);
+	return source.stream().pipeThrough(new CompressionStream(method));
 }
 
 /**
@@ -64,9 +65,10 @@ function buildHeaders(
 ): Headers {
 	const headers = new Headers(configHeaders);
 	if (extraHeaders) {
-		new Headers(extraHeaders).forEach((v, k) => {
+		// Normalize once via Headers, then copy entries — avoids the .forEach closure allocation.
+		for (const [k, v] of new Headers(extraHeaders)) {
 			headers.set(k, v);
-		});
+		}
 	}
 
 	if (!headers.has('Accept')) {
@@ -338,10 +340,10 @@ export function createApi(config: ApiConfig = {}): ApiInstance {
 		/**
 		 * Sends an OPTIONS request. Returns allowed methods and CORS info.
 		 * @param url - Request URL
-		 * @param options - Request options (accept, headers, signal, timeout)
+		 * @param opts - Request options (accept, headers, signal, timeout)
 		 */
-		options<T>(url: string | URL, options?: RequestOptions): Promise<ApiResponse<T>> {
-			return request<T>(url, HttpMethod.OPTIONS, undefined, options);
+		options<T>(url: string | URL, opts?: RequestOptions): Promise<ApiResponse<T>> {
+			return request<T>(url, HttpMethod.OPTIONS, undefined, opts);
 		},
 	};
 }

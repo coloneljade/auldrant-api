@@ -139,6 +139,12 @@ controller.abort();
 
 Aborted requests return `{ ok: false, status: 0 }`.
 
+## Credentials and cross-origin requests
+
+Headers set in `ApiConfig.headers` are sent with **every** request — including absolute URLs that point to a different origin than `baseUrl`. If you put an `Authorization` token in config headers, that token travels with any absolute URL you pass to the client.
+
+Best practice: keep `Authorization` at the call site for requests to trusted origins only, or validate URLs before calling the client. This matches how `fetch` behaves by default — no library-level stripping.
+
 ## Compression
 
 Compress request bodies before sending (useful for large payloads):

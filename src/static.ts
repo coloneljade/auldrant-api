@@ -143,11 +143,23 @@ export interface RequestBodyOptions extends RequestOptions {
 }
 
 /**
- * Discriminated union for API responses.
- * Use `ok` to narrow: if `ok` is true, `data` is `T`; otherwise `data` is `null`.
+ * Discriminated union for API responses. Narrow with `ok` and `empty`:
+ *
+ * - `r.ok && !r.empty` → `r.data` is `T` (success with body, the common case)
+ * - `r.ok && r.empty` → `r.data` is `null` (204 No Content or HEAD response)
+ * - `!r.ok` → `r.data` is `null` (network failure, timeout, parse error, or non-2xx)
  */
 export type ApiResponse<T> =
-	| { ok: true; data: T | null; status: number }
+	| { ok: true; empty: false; data: T; status: number }
+	| { ok: true; empty: true; data: null; status: number }
+	| { ok: false; data: null; status: number };
+
+/**
+ * Response shape for HEAD requests. HEAD responses never carry a body per
+ * RFC 9110 §9.3.5, so the success variant is always `empty: true`.
+ */
+export type HeadResponse =
+	| { ok: true; empty: true; data: null; status: number }
 	| { ok: false; data: null; status: number };
 
 /**
@@ -185,6 +197,6 @@ export interface ApiInstance {
 		options?: RequestBodyOptions
 	): Promise<ApiResponse<T>>;
 	delete<T>(url: string | URL, options?: RequestOptions): Promise<ApiResponse<T>>;
-	head(url: string | URL, options?: RequestOptions): Promise<ApiResponse<null>>;
+	head(url: string | URL, options?: RequestOptions): Promise<HeadResponse>;
 	options<T>(url: string | URL, options?: RequestOptions): Promise<ApiResponse<T>>;
 }

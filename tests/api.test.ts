@@ -730,3 +730,72 @@ describe('createApi', () => {
 		expect(capturedHeaders?.get('Accept')).toBe(MimeType.JSON);
 	});
 });
+
+describe('response shape (three-variant union)', () => {
+	it('sets empty: false on success with body', async () => {
+		// Arrange
+		setFetch(
+			async () =>
+				new Response(JSON.stringify({ id: 1 }), {
+					status: 200,
+					headers: { 'Content-Type': 'application/json' },
+				})
+		);
+
+		// Act
+		const result = await api.get<{ id: number }>('/users/1');
+
+		// Assert
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.empty).toBe(false);
+			if (!result.empty) {
+				// data narrows to { id: number } — no null check needed
+				expect(result.data.id).toBe(1);
+			}
+		}
+	});
+
+	it('sets empty: true on 204 No Content', async () => {
+		// Arrange
+		setFetch(async () => new Response(null, { status: 204 }));
+
+		// Act
+		const result = await api.post('/items', { name: 'test' });
+
+		// Assert
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.empty).toBe(true);
+			expect(result.data).toBeNull();
+		}
+	});
+
+	it('sets empty: true on HEAD response', async () => {
+		// Arrange
+		setFetch(async () => new Response(null, { status: 200 }));
+
+		// Act
+		const result = await api.head('/ping');
+
+		// Assert
+		expect(result.ok).toBe(true);
+		if (result.ok) {
+			expect(result.empty).toBe(true);
+			expect(result.data).toBeNull();
+		}
+	});
+
+	it('omits empty on failure responses', async () => {
+		// Arrange
+		setFetch(async () => new Response(null, { status: 500 }));
+
+		// Act
+		const result = await api.get('/boom');
+
+		// Assert
+		expect(result.ok).toBe(false);
+		expect(result.data).toBeNull();
+		expect('empty' in result).toBe(false);
+	});
+});

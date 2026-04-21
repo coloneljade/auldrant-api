@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-04-21
+
+### Added
+
+- Three-variant ApiResponse with empty discriminator ([#38](https://github.com/coloneljade/auldrant-api/pull/38))
+
 ## [1.0.2] - 2026-04-21
 
 ### Fixed

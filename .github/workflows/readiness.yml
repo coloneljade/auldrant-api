@@ -15,5 +15,4 @@ jobs:
       pr-sha: ${{ github.event.pull_request.head.sha }}
       version-file: 'package.json'
     secrets:
-      app-id: ${{ secrets.MERGE_APP_ID }}
-      private-key: ${{ secrets.MERGE_APP_PRIVATE_KEY }}
+      client-id: ${{ secrets.MERGE_CLIENT_ID }}

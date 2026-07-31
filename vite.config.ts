@@ -1,22 +1,17 @@
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
-import dts from 'vite-plugin-dts';
 
 export default defineConfig({
-	plugins: [
-		dts({
-			include: ['src'],
-			outDir: 'dist',
-		}),
-	],
+	plugins: [],
 	resolve: {
 		alias: {
-			'@static': resolve(__dirname, 'src/static.ts'),
+			'@static': resolve(import.meta.dirname, 'src/static.ts'),
 		},
 	},
 	build: {
+		outDir: 'dist',
 		lib: {
-			entry: resolve(__dirname, 'src/index.ts'),
+			entry: resolve(import.meta.dirname, 'src/index.ts'),
 			formats: ['es'],
 			fileName: 'auldrant-api',
 		},

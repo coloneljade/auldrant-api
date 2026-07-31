@@ -16,5 +16,4 @@ jobs:
       version-file: 'package.json'
     secrets:
       client-id: ${{ secrets.MERGE_CLIENT_ID }}
-      app-id: ${{ secrets.MERGE_APP_ID }}
       private-key: ${{ secrets.MERGE_APP_PRIVATE_KEY }}
